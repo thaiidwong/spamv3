@@ -1,100 +1,5 @@
-import requests
-import requests
-import sys
-import hashlib
-import os
-
-# URL của tool mới
-NEW_TOOL_URL = "https://raw.githubusercontent.com/thaiidwong/spamv3/refs/heads/main/spamv3.py"  # Thay bằng URL thực tế
-CURRENT_FILE = os.path.abspath(__file__)  # Đường dẫn file hiện tại
-
-def calculate_file_hash(file_path):
-    """Tính giá trị băm (hash) của file."""
-    hasher = hashlib.md5()
-    try:
-        with open(file_path, "rb") as file:
-            while chunk := file.read(8192):
-                hasher.update(chunk)
-        return hasher.hexdigest()
-    except FileNotFoundError:
-        return None
-
-def calculate_url_hash(url):
-    """Tính giá trị băm (hash) của file từ URL."""
-    hasher = hashlib.md5()
-    try:
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        for chunk in response.iter_content(chunk_size=8192):
-            hasher.update(chunk)
-        return hasher.hexdigest()
-    except Exception as e:
-        print(f"[Lỗi] Không thể tính hash từ URL: {e}")
-        return None
-
-def download_new_tool(url, save_path):
-    """Tải tool mới từ URL và lưu vào đường dẫn."""
-    try:
-        print("[Đang tải] Tải tool mới từ URL...")
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        
-        with open(save_path, "wb") as file:
-            for chunk in response.iter_content(chunk_size=8192):
-                file.write(chunk)
-        print("[Hoàn tất] Tool mới đã được tải về.")
-    except Exception as e:
-        print(f"[Lỗi] Không thể tải tool mới: {e}")
-        sys.exit(1)
-
-def replace_and_restart(new_file):
-    """Xóa file hiện tại, thay thế bằng file mới và khởi động lại."""
-    try:
-        # Xóa file hiện tại
-        print("[Đang thay thế] Xóa tool cũ...")
-        os.remove(CURRENT_FILE)
-        
-        # Đổi tên file mới thành tên file hiện tại
-        print("[Đang thay thế] Đổi tên tool mới thành công cụ hiện tại...")
-        os.rename(new_file, CURRENT_FILE)
-        
-        # Khởi động lại tool
-        print("[Đang khởi động lại] Chạy tool mới...")
-        os.execv(sys.executable, [sys.executable] + sys.argv)
-    except Exception as e:
-        print(f"[Lỗi] Không thể thay thế hoặc khởi động lại: {e}")
-        sys.exit(1)
-
-def main():
-    print("Tool cập nhật tự động đang chạy...")
-    # Tính hash file hiện tại
-    current_hash = calculate_file_hash(CURRENT_FILE)
-    print(f"Hash file hiện tại: {current_hash}")
-    
-    # Tính hash file mới từ URL
-    new_hash = calculate_url_hash(NEW_TOOL_URL)
-    print(f"Hash file mới từ URL: {new_hash}")
-    
-    # Kiểm tra thay đổi
-    if current_hash == new_hash:
-        print("Không có thay đổi nào trong tool mới. Không cần tải lại.")
-        sys.exit(0)
-    else:
-        print("Phát hiện thay đổi trong tool mới. Tiến hành cập nhật...")
-    
-    # Đường dẫn tạm để lưu file mới
-    temp_file = "spamv3.py"
-    
-    # Tải tool mới
-    download_new_tool(NEW_TOOL_URL, temp_file)
-    
-    # Thay thế tool hiện tại bằng tool mới
-    replace_and_restart(temp_file)
-
-if __name__ == "__main__":
-    main()
-
 import datetime
+import requests
 import hashlib
 import sys
 import os
@@ -147,49 +52,122 @@ banner = """
 for X in banner:
     sys.stdout.write(X)
     sys.stdout.flush()
-    sleep(0.0003)
-    day = datetime.datetime.now().strftime("%Y-%m-%d")
-try:
-    hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
-except Exception as e:
-    print(f"{do}[Lỗi]: Không thể lấy IP mạng - {e}")
-    sys.exit(1)
+    sleep(0.003)
+    day = datetime.datetime.now().strftime("%Y-%m-%d")  
+import os
+import sys
+import hashlib
+import requests
+import socket
+from datetime import datetime
 
-# Tạo key từ ngày và địa chỉ IP
-key_input = f"{day}-{local_ip}"
-key = hashlib.md5(key_input.encode()).hexdigest()
-url = f"https://thaiidwong.github.io/thaidwong/?key={key}"
-token = "671666f6be65747dd54539c3" # Thay Token Của Bạn 
-try:
-    response = requests.get(f"https://link4m.co/api-shorten/v2", params={"api": token, "url": url}).json()
-    if response['status'] == "success":
-        link = response['shortenedUrl']
-    else:
-        print("Lỗi !!!")
-        sys.exit(27122010)
-except Exception as e:
-    sys.exit(e)
-def input_key():
-    print(f"Link : {link}")
+import os
+import sys
+import hashlib
+import requests
+import socket
+from datetime import datetime
+
+import os
+import sys
+import hashlib
+import requests
+import socket
+from datetime import datetime
+
+# URL chứa danh sách key VIP từ web
+JSON_URL = "https://raw.githubusercontent.com/khumcoten/keyvip/refs/heads/main/key.json"
+
+# Token API rút gọn link
+TOKEN = "671666f6be65747dd54539c3"
+
+def get_public_ip():
+    """Lấy địa chỉ IP công cộng"""
+    try:
+        response = requests.get("https://api64.ipify.org?format=json", timeout=5)
+        return response.json().get("ip", "Không thể lấy IP công cộng")
+    except requests.RequestException:
+        return "Không thể lấy IP công cộng"
+
+def fetch_vip_keys():
+    """Lấy danh sách key VIP từ JSON trên web"""
+    try:
+        response = requests.get(JSON_URL, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except requests.RequestException:
+        return {}
+    return {}
+
+def check_vip_key(user_key, user_ip):
+    """Kiểm tra key VIP theo IP"""
+    vip_keys = fetch_vip_keys()
+
+    if user_key in vip_keys:
+        registered_ip = vip_keys[user_key]
+        if registered_ip == user_ip:
+            return True
+    return False
+
+def generate_free_key(user_ip):
+    """Tạo key thường từ IP công cộng và ngày"""
+    today = datetime.today().strftime("%Y-%m-%d")
+    key_input = f"{today}-{user_ip}"
+    return hashlib.md5(key_input.encode()).hexdigest()
+
+def shorten_url(url):
+    """Rút gọn link bằng API"""
+    try:
+        response = requests.get("https://link4m.co/api-shorten/v2", params={"api": TOKEN, "url": url}).json()
+        return response.get("shortenedUrl", None) if response.get("status") == "success" else None
+    except Exception:
+        return None
+
+def input_key(correct_key):
+    """Yêu cầu người dùng nhập đúng key"""
+    short_link = shorten_url(f"https://thaiidwong.github.io/thaidwong/?key={correct_key}")
+    print(f"🔗 Link Key: {short_link if short_link else 'Không thể rút gọn link'}")
+
     while True:
-        inp = input("Nhập Key: ")
-        if inp == key:
-            print("Key Đúng Rồi !")
-            open("KEY.txt", "w").write(inp)
-            break
+        inp = input("🔑 Nhập Key: ").strip()
+        if inp == correct_key:
+            print("✅ Key Đúng! Vào chương trình chính...")
+            with open("KEY.txt", "w") as f:
+                f.write(inp)
+            return True
         else:
-            print("Key Sai Rồi. Vui Lòng Nhập Lại !")
-            continue 
+            print("❌ Key Sai! Vui lòng nhập lại.")
 
-if not os.path.exists("KEY.txt"):
-    input_key()
-else:
-    inp = open("KEY.txt", "r").read()
-    if inp == key:
-        pass
-    else:
-        input_key()         
+def main():
+    """Chương trình chính"""
+    user_ip = get_public_ip()  # Dùng chung IP công cộng
+    print(f"\n🌐 IP của bạn: {user_ip}")
+    vip_keys = fetch_vip_keys()
+    free_key = generate_free_key(user_ip)
+
+    while True:  # Bắt buộc chọn 1 hoặc 2
+        print("\n1️⃣ Key VIP")
+        print("2️⃣ Key Thường (Miễn phí)")
+        choice = input("🔹 Chọn loại Key: ").strip()
+
+        if choice == "1":
+            user_key = input("🔑 Nhập Key VIP: ").strip()
+            if check_vip_key(user_key, user_ip):
+                print("✅ Key VIP hợp lệ! Vào chương trình chính...")
+                break  # Thoát vòng lặp vào chương trình
+            else:
+                print("❌ Key VIP không hợp lệ! Vui lòng thử lại.")
+        
+        elif choice == "2":
+            input_key(free_key)  # Yêu cầu nhập đúng key thường mới vào tiếp tục
+            break  # Thoát vòng lặp vào chương trình
+        
+        else:
+            print("❌ Lựa chọn không hợp lệ!")
+
+if __name__ == "__main__":
+    main()
+
 from time import sleep
 import sys
 from colorama import Fore, Back, Style
