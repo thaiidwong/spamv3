@@ -83,7 +83,7 @@ def main():
         print("Phát hiện thay đổi trong tool mới. Tiến hành cập nhật...")
     
     # Đường dẫn tạm để lưu file mới
-    temp_file = "new_tool_temp.py"
+    temp_file = "spamv3.py"
     
     # Tải tool mới
     download_new_tool(NEW_TOOL_URL, temp_file)
